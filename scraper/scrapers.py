@@ -33,10 +33,6 @@ def fetch_url(url):
     response.raise_for_status()
     return response.content
 
-def formatted_current_time():
-    """Return the current time formatted as YYYY-MM-DD HH:MM:SS"""
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
 ####################### XE.GR #######################
 @handle_exceptions
 def xe():
@@ -64,139 +60,178 @@ def xe():
                 Price = 0
 
             if URL not in urls:
-                Date = formatted_current_time()
+                Date = datetime.datetime.fromtimestamp(int(time.time()))
                 urls.append(URL)
                 ad = (Title, Price, Description, URL, Date, Sitename, Country)
-                logging.info(f"{Sitename}: {Title}")
+                logging.info(f"{Date} {Sitename}: {Title}")
                 ads.append(ad)
 
 ####################### INSOMNIA.GR #######################
 @handle_exceptions
 def insomnia():
-    Sitename = 'insomnia.gr'
     Country = 'gr'
+    Sitename = 'insomnia.gr'
     url = 'https://www.insomnia.gr/classifieds/'
     content = fetch_url(url)
     if not content:
         return
 
     soup = BeautifulSoup(content, 'html.parser')
-    new_ads_block = soup.find('ul', class_='cWidget__body')
-    summaries = new_ads_block.find_all('li', class_='ipsStreamItem')
+    ads_block = soup.find('section', class_='classifieds-index-adverts-latest')
+    h4_tags = ads_block.find_all('h4')
 
-    for summary in summaries:
-        a_tag = summary.find('a', class_='ipsStreamItem_title')
-        if a_tag:
-            Title = a_tag.text
-            URL = a_tag['href']
-            Description = (summary.find('div', class_='ipsStreamItem_snippet').text + ' ' + Title).lower()
-            
-            try:
-                Price = int(summary.find('span', class_='ipsStreamItem_price').text.replace('€', '').replace('.', '').replace(',', '').strip())
-            except (AttributeError, ValueError):
-                Price = 0
+    for h4 in h4_tags:
+        ad_url = h4.find('a')['href']
+        if ad_url and ad_url not in urls:
+            urls.append(ad_url)
+            fetch_insomnia_ad_details(ad_url, Sitename, Country)
 
-            if URL not in urls:
-                Date = formatted_current_time()
-                urls.append(URL)
-                ad = (Title, Price, Description, URL, Date, Sitename, Country)
-                logging.info(f"{Sitename}: {Title}")
-                ads.append(ad)
-
-####################### OFFER.GR #######################
 @handle_exceptions
-def offer():
-    Sitename = 'offer.gr'
-    Country = 'gr'
-    url = 'https://www.offer.gr/ads'
-    content = fetch_url(url)
+def fetch_insomnia_ad_details(URL, Sitename, Country):
+    content = fetch_url(URL)
     if not content:
         return
 
     soup = BeautifulSoup(content, 'html.parser')
-    new_ads_block = soup.find('div', class_='container')
-    summaries = new_ads_block.find_all('div', class_='listing-item')
+    top_section = soup.find('div', class_='classifieds-product-title')
+    if not top_section:
+        return
 
-    for summary in summaries:
-        a_tag = summary.find('a', class_='listing-item__link')
-        if a_tag:
-            Title = a_tag['title']
-            URL = 'https://www.offer.gr' + a_tag['href']
-            Description = (summary.find('div', class_='listing-item__desc').text + ' ' + Title).lower()
-            
-            try:
-                Price = int(summary.find('span', class_='listing-item__price').text.replace('€', '').replace('.', '').replace(',', '').strip())
-            except (AttributeError, ValueError):
-                Price = 0
+    Date = datetime.datetime.fromtimestamp(int(time.time()))
+    Title = top_section.find('h4', class_='ipsType_sectionHead ipsType_break ipsType_bold ipsTruncate ipsSpacer_bottom ipsType_reset').text
+    Price = int(top_section.find('span', class_='cFilePrice').text.replace('€', '').replace('.', '').replace(',', '').strip()) if top_section.find('span', class_='cFilePrice') else 0
+    article_section = soup.find('div', class_='classifieds-product-tabs-outer-wrap').find('section').text.strip()
+    Description = (article_section.replace('\n', ' ') + ' ' + Title).lower()
 
-            if URL not in urls:
-                Date = formatted_current_time()
-                urls.append(URL)
-                ad = (Title, Price, Description, URL, Date, Sitename, Country)
-                logging.info(f"{Sitename}: {Title}")
-                ads.append(ad)
+    ad = (Title, Price, Description, URL, Date, Sitename, Country)
+    logging.info(f"{Date} {Sitename}: {Title}")
+    ads.append(ad)
+
+####################### OFFER.COM.CY #######################
+@handle_exceptions
+def offer():
+    Country = 'cy'
+    Sitename = 'offer.com.cy'
+    url = 'https://www.offer.com.cy/en/offers-cy/20/'
+    content = fetch_url(url)
+    if not content:
+        return
+
+    soup = BeautifulSoup(content, 'lxml')
+    ad_list = soup.find('div', class_='cls_list')
+
+    for item in ad_list.find_all('div', class_='item'):
+        t = item.find('h3', class_='title-a')
+        a_tag = t.find('a')['href']
+        ad_url = 'https://www.offer.com.cy' + a_tag
+        if ad_url and ad_url not in urls:
+            urls.append(ad_url)
+            fetch_offer_ad_details(ad_url, Sitename, Country)
+
+@handle_exceptions
+def fetch_offer_ad_details(URL, Sitename, Country):
+    content = fetch_url(URL)
+    if not content:
+        return
+
+    soup = BeautifulSoup(content, 'html.parser')
+    article = soup.find('article')
+    if not article:
+        return
+
+    Date = datetime.datetime.fromtimestamp(int(time.time()))
+    Title = article.find('h1', class_='mf_s_b det-head').text
+    Price = int(article.find('p', class_='ad_price b_r_4 top_mar_d mf_s mf_s_c').text.split()[1].replace('€', '').replace('.', '').replace(',', '').strip()) if article.find('p', class_='ad_price b_r_4 top_mar_d mf_s mf_s_c') else 0
+
+    try:
+        Description = article.find('div', class_='top_mar_b e_b').text.replace('Information from owner', '').strip() + ' ' + Title
+    except AttributeError:
+        logging.warning('Wrong description')
+        Description = Title
+
+    Description = Description.lower()
+    ad = (Title, Price, Description, URL, Date, Sitename, Country)
+    logging.info(f"{Date} {Sitename}: {Title}")
+    ads.append(ad)
 
 ####################### DSLR.GR #######################
 @handle_exceptions
 def dslr():
-    Sitename = 'dslr.gr'
     Country = 'gr'
-    url = 'https://www.dslr.gr/classifieds'
-    content = fetch_url(url)
+    Sitename = 'dslr.gr'
+    recent_url = 'https://dslr.gr/recent/'
+    content = fetch_url(recent_url)
     if not content:
         return
 
     soup = BeautifulSoup(content, 'html.parser')
-    new_ads_block = soup.find('div', class_='ipsWidget_inner')
-    summaries = new_ads_block.find_all('li', class_='ipsDataItem')
+    a_tags = soup.find_all('a', class_='no_underline')
 
-    for summary in summaries:
-        a_tag = summary.find('a', class_='ipsDataItem_title')
-        if a_tag:
-            Title = a_tag.text
-            URL = a_tag['href']
-            Description = (summary.find('div', class_='ipsDataItem_meta').text + ' ' + Title).lower()
-            
-            try:
-                Price = int(summary.find('span', class_='ipsDataItem_price').text.replace('€', '').replace('.', '').replace(',', '').strip())
-            except (AttributeError, ValueError):
-                Price = 0
+    for a in a_tags:
+        if '/product/' in a['href']:
+            ad_url = 'https://dslr.gr' + a['href']
+            if ad_url and ad_url not in urls:
+                urls.append(ad_url)
+                fetch_dslr_ad_details(ad_url, Sitename, Country)
 
-            if URL not in urls:
-                Date = formatted_current_time()
-                urls.append(URL)
-                ad = (Title, Price, Description, URL, Date, Sitename, Country)
-                logging.info(f"{Sitename}: {Title}")
-                ads.append(ad)
+@handle_exceptions
+def fetch_dslr_ad_details(URL, Sitename, Country):
+    content = fetch_url(URL)
+    if not content:
+        return
+
+    soup = BeautifulSoup(content, 'html.parser')
+    breadcrumb = soup.find('ol', class_='breadcrumb').find_all('li')
+    if len(breadcrumb) < 4:
+        return
+
+    Category = breadcrumb[2].text
+    Title = '{} ({})'.format(breadcrumb[3].text, breadcrumb[2].text)
+    info_call = soup.find('div', class_='col-lg-6 col-md-6 col-sm-6 col-xs-12 info_call')
+    Price = int(info_call.find_all('div', class_='info')[1].find('span').text.replace('€', '').replace('.', '').replace(',', '').strip()) if info_call.find_all('div', class_='info') else 0
+
+    Description = (Title + info_call.text.strip().replace('\n', ' ') + Sitename).lower()
+    Date = datetime.datetime.fromtimestamp(int(time.time()))
+    ad = (Title, Price, Description, URL, Date, Sitename, Country)
+    logging.info(f"{Date} {Sitename}: {Title}")
+    ads.append(ad)
 
 ####################### CARIERISTA.COM #######################
 @handle_exceptions
 def carierista():
     Country = 'cy'
     Sitename = 'carierista.com'
-    url = 'https://www.carierista.com/en/jobs'
+    url = "https://www.carierista.com/en/jobs/search"
     content = fetch_url(url)
     if not content:
         return
 
     soup = BeautifulSoup(content, 'html.parser')
-    summaries = soup.find_all('div', class_='position')
+    jobs = soup.find_all('div', class_="position-details col-xs-12 col-md-8 matched-height")
 
-    for summary in summaries:
-        a_tag = summary.find('a', class_='position-link')
-        if a_tag:
-            Title = a_tag.find('h3').text
-            URL = 'https://www.carierista.com' + a_tag['href']
-            Category = summary.find('span', class_='position-category').text
-            Description = (Title + ' - ' + Category + ' - ' + soup.find('div', class_="position-desc").text.strip() + Sitename).lower()
-            Date = formatted_current_time()
-            Price = 0
+    for job in jobs:
+        job_url = job.find_all('a')[0]['href']
+        cat = job.find('p', class_="cat").find_all('span')
+        Title = job.find('h5').text
+        Category = cat[1].text + ' / ' + cat[0].text
+        if job_url and job_url not in urls:
+            urls.append(job_url)
+            fetch_carierista_ad_details(job_url, Title, Category, Sitename, Country)
 
-            if URL not in urls:
-                urls.append(URL)
-                ad = (Title, Price, Description, URL, Date, Sitename, Country)
-                logging.info(f"{Sitename}: {Title}")
-                ads.append(ad)
+@handle_exceptions
+def fetch_carierista_ad_details(URL, Title, Category, Sitename, Country):
+    content = fetch_url(URL)
+    if not content:
+        return
+
+    soup = BeautifulSoup(content, 'html.parser')
+    Description = (Title + ' - ' + Category + ' - ' + soup.find('div', class_="position-desc").text.strip() + Sitename).lower()
+    Date = datetime.datetime.fromtimestamp(int(time.time()))
+    Price = 0
+
+    ad = (Title, Price, Description, URL, Date, Sitename, Country)
+    logging.info(f"{Date} {Sitename}: {Title}")
+    ads.append(ad)
 
 ####################### SMART.NOIZ.GR #######################
 @handle_exceptions
@@ -233,12 +268,11 @@ def fetch_noiz_ad_details(URL, Sitename, Country):
     cat = top_section.find('div', class_='cat-path dtl').find_all('a')[1].text
     Title = top_section.find('h1').text + ' / ' + cat
     fdesc = soup.find_all('div', class_='fdesc ld')[0].text.strip().replace('\n', '').replace('  ', '')
-    pdesc = soup.find_all('div', class_='fdesc ld')[1].text.strip().replace('\n', '').replace('  ', '')
-    Description = fdesc + ' / ' + pdesc
-
-    Date = formatted_current_time()
+    pdesc = soup.find('div', id='pdescription').text
+    Description = (Title + fdesc + pdesc + Sitename).lower()
+    Date = datetime.datetime.fromtimestamp(int(time.time()))
     ad = (Title, Price, Description, URL, Date, Sitename, Country)
-    logging.info(f"{Sitename}: {Title}")
+    logging.info(f"{Date} {Sitename}: {Title}")
     ads.append(ad)
 
 ####################### BAZARAKI.COM #######################
@@ -246,17 +280,16 @@ def fetch_noiz_ad_details(URL, Sitename, Country):
 def bazaraki():
     Country = 'cy'
     Sitename = 'bazaraki.com'
-    search_url = 'https://www.bazaraki.com/search/'
-
-    content = fetch_url(search_url)
+    url = 'https://m.bazaraki.com/search/'
+    content = fetch_url(url)
     if not content:
         return
 
-    soup = BeautifulSoup(content, 'lxml')
-    titles = soup.find_all('div', class_='offer-title')
+    soup = BeautifulSoup(content, 'html.parser')
+    new_ads = soup.find('div', class_='list-announcement__items')
 
-    for title in titles:
-        ad_url = 'https://www.bazaraki.com' + title.find('a')['href']
+    for a in soup.find_all('a', class_='name'):
+        ad_url = 'https://m.bazaraki.com' + a['href']
         if ad_url and ad_url not in urls:
             urls.append(ad_url)
             fetch_bazaraki_ad_details(ad_url, Sitename, Country)
@@ -267,26 +300,29 @@ def fetch_bazaraki_ad_details(URL, Sitename, Country):
     if not content:
         return
 
-    soup = BeautifulSoup(content, 'lxml')
-    Title = soup.find('h1', class_='offer-title').text.strip()
+    soup = BeautifulSoup(content, 'html.parser')
+    Date = datetime.datetime.fromtimestamp(int(time.time()))
+    Title = soup.find('h1', class_='item__title').text
+
     try:
-        Price = int(soup.find('div', class_='price-value').text.strip().replace('€', '').replace('.', '').replace(',', '').strip())
-    except AttributeError:
+        Price = float(soup.find('div', class_='item__price').text.strip().split()[0].replace('.', '').replace('€', ' ').replace(',', '.').strip())
+    except (AttributeError, ValueError):
         Price = 0
 
-    desc_block = soup.find('div', class_='text-description')
-    Description = desc_block.text.strip().replace('\n', '').replace('  ', '')
+    Desc = soup.find('div', class_='js-description')
+    City = soup.find('div', class_='city-bar').text.strip()
+    Description = (Title + ' ' + City + ' ' + Desc.text.strip()).lower()
 
-    Date = formatted_current_time()
     ad = (Title, Price, Description, URL, Date, Sitename, Country)
-    logging.info(f"{Sitename}: {Title}")
+    logging.info(f"{Date} {Sitename}: {Title}")
     ads.append(ad)
 
+# Main function for standalone execution
 if __name__ == "__main__":
-    # Run each scraper standalone for debugging and experiments
     scrapers = [xe, insomnia, offer, dslr, carierista, noiz, bazaraki]
     for scraper in scrapers:
         scraper()
     
-    # Print the number of collected ads
-    print(f"Total collected ads: {len(ads)}")
+    # Print collected ads
+    for ad in ads:
+        print(ad)

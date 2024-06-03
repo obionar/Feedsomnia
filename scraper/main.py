@@ -27,7 +27,7 @@ def main():
     """
     Main function to initialize the database and start the scraping loop.
     """
-    con = create_connection()
+    con = create_connection(DATABASE_PATH)
     if not con:
         return
 

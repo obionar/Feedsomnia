@@ -8,16 +8,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Path to the SQLite database file
 DATABASE_PATH = '../feeds.db'
 
-def create_connection(db_file=DATABASE_PATH):
-    """
-    Create a database connection to the SQLite database specified by db_file.
-
-    Parameters:
-        db_file (str): The database file path.
-
-    Returns:
-        conn (sqlite3.Connection): The database connection object, or None if an error occurs.
-    """
+def create_connection(db_file): # Create a database connection to the SQLite database specified by db_file.
     try:
         conn = sqlite3.connect(db_file)
         logging.info("Connection to database established.")
@@ -26,13 +17,7 @@ def create_connection(db_file=DATABASE_PATH):
         logging.error(f"Error: {e}")
         return None
 
-def create_table(conn):
-    """
-    Create the Feeds table in the database if it doesn't exist.
-
-    Parameters:
-        conn (sqlite3.Connection): The database connection object.
-    """
+def create_table(conn): # Create the Feeds table in the database if it doesn't exist.
     try:
         sql_create_feeds_table = """
         CREATE TABLE IF NOT EXISTS Feeds (
@@ -52,14 +37,7 @@ def create_table(conn):
     except Error as e:
         logging.error(f"Error: {e}")
 
-def sql_insert(conn, entities):
-    """
-    Insert a new ad into the Feeds table.
-
-    Parameters:
-        conn (sqlite3.Connection): The database connection object.
-        entities (tuple): A tuple containing the ad data (Title, Price, Description, URL, Date, Sitename, Country).
-    """
+def sql_insert(conn, entities): # Insert a new ad into the Feeds table.
     try:
         sql_insert_ad = """
         INSERT OR IGNORE INTO Feeds(Title, Price, Description, URL, Date, Sitename, Country)
@@ -68,15 +46,13 @@ def sql_insert(conn, entities):
         cur = conn.cursor()
         cur.execute(sql_insert_ad, entities)
         conn.commit()
-        logging.info("Ad inserted into Feeds table.")
+
     except Error as e:
         logging.error(f"Error: {e}")
 
-def initialize_database():
-    """
-    Initialize the database and create the Feeds table if it doesn't exist.
-    """
-    conn = create_connection()
+
+def initialize_database(): # Initialize the database and create the Feeds table if it doesn't exist
+    conn = create_connection(DATABASE_PATH)
     if conn is not None:
         create_table(conn)
     else:
