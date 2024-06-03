@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feedsomnia</title>
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" type="text/css">
+    <script type="text/javascript">
+        window.onload = function() {
+            document.forms['searchform'].elements['kw'].focus();
+        };
+
+        function liveSearch() {
+            let keyword = document.getElementById('kw').value;
+            let country = document.getElementById('country').value;
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', `/search?kw=${encodeURIComponent(keyword)}&country=${encodeURIComponent(country)}`, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    let results = JSON.parse(xhr.responseText);
+                    let resultsTable = document.getElementById('resultsTable');
+                    let resultsCount = document.getElementById('resultsCount');
+                    let keywordDisplay = document.getElementById('keywordDisplay');
+                    
+                    resultsCount.innerText = results.length;
+                    keywordDisplay.innerText = keyword;
+                    
+                    resultsTable.innerHTML = '';
+                    for (let i = 0; i < results.length; i++) {
+                        let row = results[i];
+                        let tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${row[4]}</td>
+                                        <td><a href="${row[0]}" target="_blank"><b>${row[1]}</b></a></td>
+                                        <td>${row[2]}</td>
+                                        <td class="date">${row[3]}</td>
+                                        <td>${row[5]}</td>`;
+                        resultsTable.appendChild(tr);
+                    }
+                }
+            };
+            xhr.send();
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Feedsomnia</h1>
+            <p>Your one-stop solution for searching classified ads efficiently.</p>
+        </header>
+        <div class="help-box">
+            <h3>Search Tips</h3>
+            <p>You can filter results using the following options:</p>
+            <ul>
+                <li><strong>Keyword Search:</strong> Enter keywords to search in the description.</li>
+                <li><strong>Price Filter:</strong> Use <code>&lt;price</code> to find items cheaper than the given price and <code>&gt;price</code> to find items more expensive than the given price.</li>
+            </ul>
+        </div>
+        <div class="search-filter-box">
+            <form name="searchform" action="/" method
