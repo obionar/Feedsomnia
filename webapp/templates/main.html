@@ -43,7 +43,9 @@
 <body>
     <div class="container">
         <header>
-            <h1>Feedsomnia</h1>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="{{ url_for('static', filename='logo.webp') }}" alt="Feedsomnia Logo" style="max-width: 200px;">
+            </div>
             <p>Your one-stop solution for searching classified ads efficiently.</p>
         </header>
         <div class="help-box">
@@ -55,4 +57,45 @@
             </ul>
         </div>
         <div class="search-filter-box">
-            <form name="searchform" action="/" method
+            <form name="searchform" action="/" method="get" onsubmit="return false;" class="form-inline">
+                <div class="searchbox">
+                    <input type="text" id="kw" name="kw" class="smooth" onkeyup="liveSearch();" placeholder="Search...">
+                </div>
+                <div class="filter-box">
+                    <select id="country" name="country" onchange="liveSearch();" placeholder="Select Country">
+                        <option value="All Countries">All Countries</option>
+                        {% for country in countries %}
+                            <option value="{{ country }}">{{ country }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="results">
+            <p><span id="resultsCount">{{ len_results }}</span> ads for: <b>"<span id="keywordDisplay">{{ keyword }}</span>"</b></p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>From</th>
+                        <th>Title</th>
+                        <th>Price</th>
+                        <th>Date</th>
+                        <th>in Site</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTable">
+                    {% for ad in fetch %}
+                        <tr>
+                            <td>{{ ad[4] }}</td>
+                            <td><a href="{{ ad[0] }}" target="_blank"><b>{{ ad[1] }}</b></a></td>
+                            <td>{{ ad[2] }}</td>
+                            <td class="date">{{ ad[3] }}</td>
+                            <td>{{ ad[5] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
