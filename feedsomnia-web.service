@@ -1,0 +1,12 @@
+[Unit]
+Description=Gunicorn instance for Feedsomnia
+After=network.target
+
+[Service]
+User=your_user
+Group=www-data
+WorkingDirectory=/home/ian/Dev/Feedsomnia/webapp
+ExecStart=/usr/bin/gunicorn --workers 3 --bind unix:feedsomnia.sock -m 007 wsgi:app
+
+[Install]
+WantedBy=multi-user.target
