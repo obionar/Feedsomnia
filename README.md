@@ -1,5 +1,7 @@
 # Feedsomnia
 
+![Feedsomnia Logo](webapp/static/logo.webp)
+
 ## Introduction
 
 Feedsomnia is designed to simplify the process of searching for used items across various classified ad websites. Instead of manually visiting each site, Feedsomnia automates the search, allowing you to monitor new ads in real-time and quickly find the best deals.
@@ -54,3 +56,7 @@ Contributions are welcome! Please fork this repository and submit a pull request
 ## Acknowledgments
 
 Special thanks to the developers and contributors who support the free software.
+
+## Short Description
+
+Feedsomnia is a web app that consolidates and simplifies the search for used items across multiple classified ad websites.
