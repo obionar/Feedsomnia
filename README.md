@@ -1,6 +1,6 @@
 # Feedsomnia
 
-![Feedsomnia Logo](webapp/static/logo.webp)
+<img src="webapp/static/logo.webp" alt="Feedsomnia Logo" width="50%">
 
 ## Introduction
 
