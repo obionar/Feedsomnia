@@ -23,11 +23,6 @@ header {
     margin-bottom: 20px;
 }
 
-header h1 {
-    font-size: 2.5em;
-    margin-bottom: 10px;
-}
-
 header p {
     font-size: 1.2em;
     color: #666;
@@ -56,10 +51,12 @@ header p {
     border-radius: 8px;
     padding: 10px;
     background-color: #f9f9f9;
+    flex-wrap: wrap;
 }
 
 .searchbox {
     flex-grow: 1;
+    width: 100%;
 }
 
 .searchbox input[type="text"] {
@@ -77,7 +74,13 @@ header p {
     box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
 }
 
+.filter-box {
+    width: 100%;
+    margin-top: 10px;
+}
+
 .filter-box select {
+    width: 100%;
     padding: 15px;
     font-size: 16px;
     border: 1px solid #ccc;
@@ -133,8 +136,8 @@ header p {
         padding: 10px;
     }
 
-    header h1 {
-        font-size: 2em;
+    header p {
+        font-size: 1em;
     }
 
     .help-box {
