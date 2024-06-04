@@ -1,19 +1,14 @@
+#!/usr/bin/env python3
 import time
 import logging
 from database import create_connection, create_table, sql_insert, DATABASE_PATH
-from scrapers import xe, insomnia, offer, dslr, carierista, noiz, bazaraki, ads, urls
+from scrapers import ergodotisi, car, xe, insomnia, offer, dslr, carierista, noiz, bazaraki, ads, urls
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def scrape_and_store(con):
-    """
-    Scrape data from various websites and store it in the database.
-
-    Parameters:
-        con (sqlite3.Connection): The database connection object.
-    """
-    scrapers = [offer, bazaraki, noiz, carierista, dslr, xe, insomnia]
+    scrapers = [offer, bazaraki, noiz, carierista, dslr, xe, insomnia, ergodotisi, car]
     for scraper in scrapers:
         scraper()
 
@@ -24,9 +19,6 @@ def scrape_and_store(con):
         logging.info(f'New ads: {len(urls)}')
 
 def main():
-    """
-    Main function to initialize the database and start the scraping loop.
-    """
     con = create_connection(DATABASE_PATH)
     if not con:
         return

@@ -317,9 +317,78 @@ def fetch_bazaraki_ad_details(URL, Sitename, Country):
     logging.info(f"{Date} {Sitename}: {Title}")
     ads.append(ad)
 
+
+###################### ERGODOTISI.COM ######################
+@handle_exceptions
+def ergodotisi():
+    ergodotisi_country = 'cy'
+    ergodotisi_sitename = 'ergodotisi.com'
+    url = 'https://www.ergodotisi.com/en/SearchResults.aspx?q='
+    content = fetch_url(url)
+    if not content:
+        return
+
+    ergodotisi_adlist_soup = BeautifulSoup(content, 'html.parser')
+    ergodotisi_ads = ergodotisi_adlist_soup.find_all('a', class_='text-orane ref-number font-weight-bold')
+    for ergodotisi_ad in ergodotisi_ads:
+        ergodotisi_ad_url = 'https://www.ergodotisi.com/en/' + ergodotisi_ad['href']
+        if ergodotisi_ad_url not in urls:
+            ergodotisi_ad_content = fetch_url(ergodotisi_ad_url)
+            if not ergodotisi_ad_content:
+                return
+            ergodotisi_ad_soup = BeautifulSoup(ergodotisi_ad_content, 'html.parser')
+            ergodotisi_ad_title = ergodotisi_ad_soup.find('h1').text
+            ergodotisi_ad_category = ergodotisi_ad_soup.find('div', class_='col-md-12 seprate-box-border m-t-2 m-b-2 p-t-1').text
+            ergodotisi_ad_description = ergodotisi_ad_soup.find('div', class_='col-md-12 description-part alpha').text
+            ergodotisi_ad_description = (ergodotisi_ad_description + ' ' + ergodotisi_ad_category + ' ' + ergodotisi_sitename).strip().lower()
+            ergodotisi_ad_date = datetime.datetime.fromtimestamp(int(time.time()))
+            ad = (ergodotisi_ad_title, 0, ergodotisi_ad_description, ergodotisi_ad_url, ergodotisi_ad_date, ergodotisi_sitename, ergodotisi_country)
+            logging.info(f"{ergodotisi_sitename}: {ergodotisi_ad_title}")
+            urls.append(ergodotisi_ad_url)
+            ads.append(ad)
+
+
+##################### CAR.GR #####################
+@handle_exceptions
+def car():
+    car_country = 'gr'
+    car_sitename = 'car.gr'
+    url = 'https://www.car.gr/xyma/?category=50&created=%3E1'
+    content = fetch_url(url)
+    if not content:
+        return
+
+    car_adlist_soup = BeautifulSoup(content, 'html.parser')
+    car_ads = car_adlist_soup.find_all('a', class_='row-anchor')
+ 
+    for car_ad in car_ads:
+        car_ad_url = 'https://www.car.gr' + car_ad['href']
+        if car_ad_url not in urls:
+            car_ad_content = fetch_url(car_ad_url)
+            if not car_ad_content:
+                return
+            car_ad_soup = BeautifulSoup(car_ad_content, 'html.parser')
+            car_ad_title = car_ad_soup.find('h1' , class_='tw-font-bold tw-text-2xl tw-mb-0 classified-title tw-mt-2 tw-block').text.strip()
+
+            try:
+                car_ad_price = car_ad_soup.find('h3', class_='tw-text-3xl tw-font-extrabold tw-mt-2 tw-opacity-95 tw-block tw-leading-normal tw-text-center tw-rounded tw-flex-shrink-0 price-only tw-mb-0 tw-mr-3 tw-text-grey-800').text
+                car_ad_price = int(car_ad_price.replace('€', '').replace('.', '').replace(',', '').strip())
+            except AttributeError:
+                car_ad_price = 0
+            car_ad_description = car_ad_soup.find('div', class_='tw-overflow-hidden tw-ease-out tw-duration-200 tw-transition-[max-height] print-full-height tw-whitespace-pre-wrap').text
+            car_ad_description = (car_ad_description + ' ' + car_ad_title + ' ' + car_sitename).strip().lower()
+            car_ad_date = datetime.datetime.fromtimestamp(int(time.time()))
+            ad = (car_ad_title, car_ad_price, car_ad_description, car_ad_url, car_ad_date, car_sitename, car_country)
+            logging.info(f"{car_sitename}: {car_ad_title}")
+            urls.append(car_ad_url)
+            ads.append(ad)
+    
+
+
 # Main function for standalone execution
 if __name__ == "__main__":
-    scrapers = [xe, insomnia, offer, dslr, carierista, noiz, bazaraki]
+    #scrapers = [xe, insomnia, offer, dslr, carierista, noiz, bazaraki]
+    scrapers = [ergodotisi, car]
     for scraper in scrapers:
         scraper()
     
