@@ -71,6 +71,7 @@ def search():
 
     try:
         con = sqlite3.connect('../feeds.db')
+        con.execute('PRAGMA encoding = "UTF-8"')
         cur = con.cursor()
         cur.execute(f'''SELECT URL, Title, Price, Date, Country, Sitename 
                         FROM Feeds 
@@ -85,7 +86,9 @@ def search():
         if con:
             con.close()
 
-    return jsonify(rows)
+    response = jsonify(rows)
+    response.headers['Content-Type'] = 'application/json; charset=utf-8'
+    return response
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
