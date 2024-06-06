@@ -52,7 +52,7 @@ def xe():
         if a_tag:
             Title = a_tag.text
             URL = 'https://www.xe.gr' + a_tag['href']
-            Description = (summary.find('p').text + ' ' + Title).lower()
+            Description = (summary.find('p').text + ' ' + Title + ' ' + Sitename).lower()
             
             try:
                 Price = int(summary.find('span', class_='rPriceLabel').text.replace('€', '').replace('.', '').replace(',', '').strip())
@@ -63,7 +63,7 @@ def xe():
                 Date = datetime.datetime.fromtimestamp(int(time.time()))
                 urls.append(URL)
                 ad = (Title, Price, Description, URL, Date, Sitename, Country)
-                logging.info(f"{Date} {Sitename}: {Title}")
+                logging.info(f"{Sitename}: {Title}")
                 ads.append(ad)
 
 ####################### INSOMNIA.GR #######################
@@ -101,10 +101,10 @@ def fetch_insomnia_ad_details(URL, Sitename, Country):
     Title = top_section.find('h4', class_='ipsType_sectionHead ipsType_break ipsType_bold ipsTruncate ipsSpacer_bottom ipsType_reset').text
     Price = int(top_section.find('span', class_='cFilePrice').text.replace('€', '').replace('.', '').replace(',', '').strip()) if top_section.find('span', class_='cFilePrice') else 0
     article_section = soup.find('div', class_='classifieds-product-tabs-outer-wrap').find('section').text.strip()
-    Description = (article_section.replace('\n', ' ') + ' ' + Title).lower()
+    Description = (article_section.replace('\n', ' ') + ' ' + Title + ' ' + Sitename).lower()
 
     ad = (Title, Price, Description, URL, Date, Sitename, Country)
-    logging.info(f"{Date} {Sitename}: {Title}")
+    logging.info(f"{Sitename}: {Title}")
     ads.append(ad)
 
 ####################### OFFER.COM.CY #######################
@@ -148,10 +148,9 @@ def fetch_offer_ad_details(URL, Sitename, Country):
     except AttributeError:
         logging.warning('Wrong description')
         Description = Title
-
-    Description = Description.lower()
+    Description = (Sitename + ' ' + Description).lower()
     ad = (Title, Price, Description, URL, Date, Sitename, Country)
-    logging.info(f"{Date} {Sitename}: {Title}")
+    logging.info(f"{Sitename}: {Title}")
     ads.append(ad)
 
 ####################### DSLR.GR #######################
@@ -193,7 +192,7 @@ def fetch_dslr_ad_details(URL, Sitename, Country):
     Description = (Title + info_call.text.strip().replace('\n', ' ') + Sitename).lower()
     Date = datetime.datetime.fromtimestamp(int(time.time()))
     ad = (Title, Price, Description, URL, Date, Sitename, Country)
-    logging.info(f"{Date} {Sitename}: {Title}")
+    logging.info(f"{Sitename}: {Title}")
     ads.append(ad)
 
 ####################### CARIERISTA.COM #######################
@@ -225,12 +224,12 @@ def fetch_carierista_ad_details(URL, Title, Category, Sitename, Country):
         return
 
     soup = BeautifulSoup(content, 'html.parser')
-    Description = (Title + ' - ' + Category + ' - ' + soup.find('div', class_="position-desc").text.strip() + Sitename).lower()
+    Description = (Title + ' ' + Category + ' ' + soup.find('div', class_="position-desc").text.strip() + Sitename).lower()
     Date = datetime.datetime.fromtimestamp(int(time.time()))
     Price = 0
 
     ad = (Title, Price, Description, URL, Date, Sitename, Country)
-    logging.info(f"{Date} {Sitename}: {Title}")
+    logging.info(f"{Sitename}: {Title}")
     ads.append(ad)
 
 ####################### SMART.NOIZ.GR #######################
@@ -272,49 +271,7 @@ def fetch_noiz_ad_details(URL, Sitename, Country):
     Description = (Title + fdesc + pdesc + Sitename).lower()
     Date = datetime.datetime.fromtimestamp(int(time.time()))
     ad = (Title, Price, Description, URL, Date, Sitename, Country)
-    logging.info(f"{Date} {Sitename}: {Title}")
-    ads.append(ad)
-
-####################### BAZARAKI.COM #######################
-@handle_exceptions
-def bazaraki():
-    Country = 'cy'
-    Sitename = 'bazaraki.com'
-    url = 'https://m.bazaraki.com/search/'
-    content = fetch_url(url)
-    if not content:
-        return
-
-    soup = BeautifulSoup(content, 'html.parser')
-    new_ads = soup.find('div', class_='list-announcement__items')
-
-    for a in soup.find_all('a', class_='name'):
-        ad_url = 'https://m.bazaraki.com' + a['href']
-        if ad_url and ad_url not in urls:
-            urls.append(ad_url)
-            fetch_bazaraki_ad_details(ad_url, Sitename, Country)
-
-@handle_exceptions
-def fetch_bazaraki_ad_details(URL, Sitename, Country):
-    content = fetch_url(URL)
-    if not content:
-        return
-
-    soup = BeautifulSoup(content, 'html.parser')
-    Date = datetime.datetime.fromtimestamp(int(time.time()))
-    Title = soup.find('h1', class_='item__title').text
-
-    try:
-        Price = float(soup.find('div', class_='item__price').text.strip().split()[0].replace('.', '').replace('€', ' ').replace(',', '.').strip())
-    except (AttributeError, ValueError):
-        Price = 0
-
-    Desc = soup.find('div', class_='js-description')
-    City = soup.find('div', class_='city-bar').text.strip()
-    Description = (Title + ' ' + City + ' ' + Desc.text.strip()).lower()
-
-    ad = (Title, Price, Description, URL, Date, Sitename, Country)
-    logging.info(f"{Date} {Sitename}: {Title}")
+    logging.info(f"{Sitename}: {Title}")
     ads.append(ad)
 
 
@@ -373,9 +330,12 @@ def car():
             try:
                 car_ad_price = car_ad_soup.find('h3', class_='tw-text-3xl tw-font-extrabold tw-mt-2 tw-opacity-95 tw-block tw-leading-normal tw-text-center tw-rounded tw-flex-shrink-0 price-only tw-mb-0 tw-mr-3 tw-text-grey-800').text
                 car_ad_price = int(car_ad_price.replace('€', '').replace('.', '').replace(',', '').strip())
-            except AttributeError:
+            except:
                 car_ad_price = 0
-            car_ad_description = car_ad_soup.find('div', class_='tw-overflow-hidden tw-ease-out tw-duration-200 tw-transition-[max-height] print-full-height tw-whitespace-pre-wrap').text
+            try:
+                car_ad_description = car_ad_soup.find('div', class_='tw-overflow-hidden tw-ease-out tw-duration-200 tw-transition-[max-height] print-full-height tw-whitespace-pre-wrap').text
+            except AttributeError:
+                car_ad_description = ' '
             car_ad_description = (car_ad_description + ' ' + car_ad_title + ' ' + car_sitename).strip().lower()
             car_ad_date = datetime.datetime.fromtimestamp(int(time.time()))
             ad = (car_ad_title, car_ad_price, car_ad_description, car_ad_url, car_ad_date, car_sitename, car_country)
@@ -383,15 +343,44 @@ def car():
             urls.append(car_ad_url)
             ads.append(ad)
     
+####################### BAZARAKI.COM #######################
+@handle_exceptions
+def bazaraki():
+    bazaraki_country = 'cy'
+    bazaraki_sitename = 'bazaraki.com'
+    url = 'https://m.bazaraki.com/search/?page=75&ordering=newest'
+    content = fetch_url(url)
+    if not content:
+        return
+    bazaraki_adlist_soup = BeautifulSoup(content, 'html.parser')
+    bazaraki_ads = bazaraki_adlist_soup.findAll('a', class_='advert-grid__content-title')
+    for bazaraki_ad in bazaraki_ads:
+        bazaraki_ad_url = 'https://m.bazaraki.com' + bazaraki_ad['href']
+        if bazaraki_ad_url not in urls:
+            bazaraki_ad_content = fetch_url(bazaraki_ad_url)
+            if not bazaraki_ad_content:
+                return
+            bazaraki_ad_soup = BeautifulSoup(bazaraki_ad_content, 'html.parser')
+            bazaraki_ad_title = bazaraki_ad_soup.find('h1', class_='item__title').text.strip()
+            try:
+                bazaraki_ad_price = bazaraki_ad_soup.find(itemprop='price').get("content")  
+            except:
+                bazaraki_ad_price = 0
+            bazaraki_ad_citybar = bazaraki_ad_soup.find('div', class_='city-bar').text.strip()
+            bazaraki_ad_itemtable = bazaraki_ad_soup.find('ul', class_='item-table').text.strip() 
+            bazaraki_ad_description = bazaraki_ad_soup.find('div', class_='js-description').text.strip()
+            bazaraki_ad_description = (bazaraki_ad_description + ' ' + bazaraki_ad_title + ' ' + bazaraki_ad_citybar + ' ' + bazaraki_ad_itemtable).strip().lower()
+            bazaraki_ad_date = datetime.datetime.fromtimestamp(int(time.time()))
+            
+            ad = (bazaraki_ad_title, bazaraki_ad_price, bazaraki_ad_description, bazaraki_ad_url, bazaraki_ad_date, bazaraki_sitename, bazaraki_country)
+            logging.info(f"{bazaraki_sitename}: {bazaraki_ad_title}")
+            urls.append(bazaraki_ad_url)
+            ads.append(ad)
+        
 
 
 # Main function for standalone execution
 if __name__ == "__main__":
-    #scrapers = [xe, insomnia, offer, dslr, carierista, noiz, bazaraki]
-    scrapers = [ergodotisi, car]
+    scrapers = [bazaraki, car, xe, insomnia, offer, dslr, carierista, noiz]
     for scraper in scrapers:
         scraper()
-    
-    # Print collected ads
-    for ad in ads:
-        print(ad)
