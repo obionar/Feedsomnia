@@ -8,7 +8,7 @@ from scrapers import ergodotisi, car, xe, insomnia, offer, dslr, carierista, noi
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def scrape_and_store(con):
-    scrapers = [offer, bazaraki, noiz, carierista, dslr, xe, insomnia, ergodotisi, car]
+    scrapers = [bazaraki, car, offer, noiz, carierista, dslr, xe, insomnia, ergodotisi]
     for scraper in scrapers:
         scraper()
 
@@ -27,7 +27,7 @@ def main():
         while True:
             scrape_and_store(con)
             con.commit()  # Ensure any pending transactions are committed
-            time.sleep(5)
+            time.sleep(60) # Sleep between scrapes
     except KeyboardInterrupt:
         logging.info("Terminating the script.")
     finally:
